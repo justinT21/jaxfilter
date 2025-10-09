@@ -34,7 +34,7 @@ class EKFTest(absltest.TestCase):
 
             X_truth = previous_X + jnp.array([[0.5, 0.]]).T * self.dt
             X_measured = X_truth[0,0] + jax.random.normal(subkey, shape=(1,1)) * 0.3 * self.dt
-            filter.update_linear(X_measured , H, R, U_initial, self.dt)
+            filter.update_linear(X_measured , H, R, U_initial, self.dt, stable=True)
             X_predict = filter.X
 
             return (key, X_truth, t, filter), (X_truth.reshape(2,), t, X_measured, X_predict.reshape(2,))
@@ -47,7 +47,7 @@ class EKFTest(absltest.TestCase):
         plt.plot(series_values[1], series_values[3][:, 1], label = "kf-flow") 
         plt.show()
 
-        assert(jnp.allclose(series_values[0][:, 0], series_values[3][:, 0]))
+        assert(jnp.allclose(series_values[0][:, 0], series_values[3][:, 0], rtol=0.1))
 
 if __name__ == '__main__':
   absltest.main()

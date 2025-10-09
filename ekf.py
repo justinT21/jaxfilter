@@ -25,7 +25,7 @@ class Ekf:
         return ekf
 
 
-    def update_linear(self,z, H, R, U, dt) -> None:
+    def update_linear(self,z, H, R, U, dt, stable=False) -> None:
         # time update
         if dt > 0:
             self.U = U
@@ -39,9 +39,12 @@ class Ekf:
         e = z - H @ self.X # innovations fo the KF
 
         self.X = self.X + K @ e
-        self.P = self.P - K @ H @ self.P
+        if stable:
+            self.P = (jnp.identity(self.P.shape[0]) - K @ H) @ self.P @ (jnp.identity(self.P.shape[0]) - K @ H).T + K @ R_d @ K.T
+        else:
+            self.P = self.P - K @ H @ self.P
 
-    def update_nonlinear(self,z, h, R, U, dt) -> None:
+    def update_nonlinear(self,z, h, R, U, dt, stable=False) -> None:
         # time update
         if dt > 0:
             self.U = U
@@ -56,7 +59,11 @@ class Ekf:
         e = z - h(self.X) # innovations of the KF
 
         self.X = self.X + K @ e
-        self.P = self.P - K @ H @ self.P
+        if stable:
+            self.P = (jnp.identity(self.P.shape[0]) - K @ H) @ self.P @ (jnp.identity(self.P.shape[0]) - K @ H).T + K @ R_d @ K.T
+        else:
+            self.P = self.P - K @ H @ self.P
+
         
     def __predict(self, dt):
         IJ = jnp.identity(self.num_states) + dt * self.J(self.X.reshape((self.num_states,)), self.U)
