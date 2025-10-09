@@ -69,6 +69,8 @@ class Ekf:
         IJ = jnp.identity(self.num_states) + dt * self.J(self.X.reshape((self.num_states,)), self.U)
         Q = discretize.discretizeQ(self.J(self.X.reshape((self.num_states,)), self.U), self.Q_c, self.num_states, dt)
         self.P = IJ @ self.P @ IJ.T + dt * Q
+        self.P_predicted = self.P
         self.X = self.X + dt * self.F_c(self.X, self.U)
+        self.X_predicted = self.X
 
 

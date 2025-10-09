@@ -6,6 +6,7 @@ from absl.testing import absltest
 import jax.numpy as jnp
 import jax
 import ekf
+import rts_smoother
 import matplotlib.pyplot as plt
 
 
@@ -37,17 +38,29 @@ class EKFTest(absltest.TestCase):
             filter.update_linear(X_measured , H, R, U_initial, self.dt, stable=True)
             X_predict = filter.X
 
-            return (key, X_truth, t, filter), (X_truth.reshape(2,), t, X_measured, X_predict.reshape(2,))
+            return (key, X_truth, t, filter), (X_truth.reshape(2,), t, X_measured, X_predict.reshape(2,), filter.X_predicted.reshape(2,), filter.P, filter.P_predicted)
 
         _, series_values = jax.lax.scan(f=loop, init=(first_subkey, X_initial, 0.0, filter), length = self.num_steps)
+
+        smoother = rts_smoother.Rts(filter.F_c, filter.num_states)
+        print(series_values[3].shape)
+        print(jnp.empty((series_values[1].shape[0],0,)).shape)
+        X_rts,_ =smoother.run(series_values[1], series_values[3], series_values[4], series_values[5], series_values[6], jnp.empty((series_values[1].shape[0],0,)), filter.Q_c, stable=True)
 
         plt.plot(series_values[1], series_values[0][:, 0], label = "truth") 
         plt.plot(series_values[1], series_values[2][:, 0, 0], label = "measured") 
         plt.plot(series_values[1], series_values[3][:, 0], label = "kf") 
         plt.plot(series_values[1], series_values[3][:, 1], label = "kf-flow") 
-        plt.show()
+        print(X_rts.shape)
+        plt.plot(series_values[1][:-1], X_rts[:, 0], label = "kf-rts") 
+        plt.plot(series_values[1][:-1], X_rts[:, 1], label = "flow-rts") 
+        plt.legend()
+        #plt.show()
+        print(jnp.max(jnp.abs(series_values[0][:-1,0] - X_rts[:, 0])))
+        print(jnp.max(jnp.abs(series_values[0][:,0] - series_values[3][:, 0])))
 
-        assert(jnp.allclose(series_values[0][:, 0], series_values[3][:, 0], rtol=0.1))
+        self.assertTrue(jnp.allclose(series_values[0][:-1, 0], X_rts[:, 0], atol=0.002))
+        self.assertTrue(jnp.allclose(series_values[0][:, 0], series_values[3][:, 0], atol=0.05))
 
 if __name__ == '__main__':
   absltest.main()
