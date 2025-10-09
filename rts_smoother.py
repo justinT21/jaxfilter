@@ -9,8 +9,6 @@ class Rts:
        self.J = jax.jacrev(self.F_c, argnums = 0)
 
     def run(self, time_series, X_filtered, X_predicted, P_filtered, P_predicted, U_series, Q_c, stable=False):
-        print(U_series.shape)
-
         def reverse_loop(carry, x):
             future_t, future_X_rts, future_P_rts = carry
             t, X_filtered, X_predicted, P_filtered, P_predicted, U_control = x
@@ -33,5 +31,21 @@ class Rts:
         _, (X_rts, P_rts) = jax.lax.scan(f=reverse_loop, init=(time_series[-1], X_filtered[-1], P_filtered[-1]), xs=(time_series[:-1], X_filtered[:-1], X_predicted[1:], P_filtered[:-1], P_predicted[1:], U_series[:-1]), reverse=True)
         return X_rts, P_rts
 
-    def filter_and_run(self, time_series, ekf):
-        pass
+    def filter_and_run(self, time_series, X_data, U_data, h, R, ekf, stable=False):
+        def loop(carry, x):
+            filter, previous_t = carry
+            t, X_measured, U = x
+            dt = t - previous_t
+
+            filter.update_nonlinear(X_measured, h, R, U, dt, stable = stable)
+            X_predict = filter.X 
+
+            return (filter, t), (X_predict, filter.X_predicted, filter.P, filter.P_predicted)
+
+
+        _, (X_filtered, X_predicted, P_filtered, P_predicted) = jax.lax.scan(f=loop, init=filter, xs=(time_series, X_data, U_data))
+
+        X_rts,_ = self.run(time_series, X_filtered, X_predicted, P_filtered, P_predicted, U_data, ekf.Q_c, stable)
+
+        return X_rts
+        
