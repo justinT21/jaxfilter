@@ -24,12 +24,16 @@ class Ekf:
         ekf.F_c, ekf.Q_c, ekf.J, ekf.num_states, ekf.num_control = aux_data
         return ekf
 
+    def __update(self, U, dt):
+        self.U = U
+        self.__predict(dt)
+
+    def __nothing(self, U, dt):
+        pass
 
     def update_linear(self,z, H, R, U, dt, stable=False) -> None:
         # time update
-        if dt > 0:
-            self.U = U
-            self.__predict(dt)
+        jax.lax.cond(dt > 0, self.__update, self.__nothing, U, dt)
 
         R_d = discretize.discretizeR(R, dt)
 
@@ -46,9 +50,7 @@ class Ekf:
 
     def update_nonlinear(self,z, h, R, U, dt, stable=False) -> None:
         # time update
-        if dt > 0:
-            self.U = U
-            self.__predict(dt)
+        jax.lax.cond(dt > 0, self.__update, self.__nothing, U, dt)
 
         H = jax.jacrev(h)(self.X)
         R_d = discretize.discretizeR(R, dt)
