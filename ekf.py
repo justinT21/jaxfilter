@@ -52,13 +52,13 @@ class Ekf:
         # time update
         jax.lax.cond(dt > 0, self.__update, self.__nothing, U, dt)
 
-        H = jax.jacrev(h)(self.X)
+        H = jax.jacrev(h, argnums=0)(self.X, U)
         R_d = discretize.discretizeR(R, dt)
 
         # measurement update
         R_e = R_d + H @ self.P @ H.T
         K = self.P @ H.T @ jnp.linalg.inv(R_e)
-        e = z - h(self.X) # innovations of the KF
+        e = z - h(self.X, U) # innovations of the KF
 
         self.X = self.X + K @ e
         if stable:
