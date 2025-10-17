@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import jax
-import discretize
+from . import discretize
 
 @jax.tree_util.register_pytree_node_class
 class Ekf:

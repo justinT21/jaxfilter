@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-import discretize
+from . import discretize
 
 class Rts:
     def __init__(self, F_c, num_states:int) -> None:

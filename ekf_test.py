@@ -5,8 +5,8 @@ os.environ['JAX_PLATFORMS'] = 'cuda,cpu'
 from absl.testing import absltest
 import jax.numpy as jnp
 import jax
-import ekf
-import rts_smoother
+from . import ekf
+from . import rts_smoother
 import matplotlib.pyplot as plt
 
 
