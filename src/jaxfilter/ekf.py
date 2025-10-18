@@ -55,7 +55,7 @@ def update_linear(ekf,z, H, R, U, dt, stable=False):
 
         return ekf
 
-@partial(jax.jit, static_argnames=['stable'])
+@partial(jax.jit, static_argnames=['h', 'stable'])
 def update_nonlinear(ekf,z, h, R, U, dt, stable=False):
         # time update
         ekf = jax.lax.cond(dt > 0, __update, __nothing, ekf, U, dt)
