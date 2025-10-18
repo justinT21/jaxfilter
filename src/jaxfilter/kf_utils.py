@@ -9,7 +9,7 @@ def run_nonlinear_on_array(F, h, R, Q, t_data, X_measured, U_data, P_initial, nu
         t, X_measured, U = x
         dt = t - previous_t
 
-        filter.update_nonlinear(X_measured, h, R, U, dt)
+        filter = ekf.update_nonlinear(filter, X_measured, h, R, U, dt)
         X_predict = filter.X 
 
         return (filter, t), X_predict

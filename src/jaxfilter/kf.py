@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-import discretize
+from . import discretize
 
 @jax.tree_util.register_pytree_node_class
 class Kf:

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jaxfilter"
+version = "0.0.1"
+description = "Simple Filter Accelerated with Jax"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+  "jax",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+cuda = ["jax[cuda13]"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+

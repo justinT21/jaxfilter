@@ -1,12 +1,11 @@
 import os
 
-os.environ['JAX_PLATFORMS'] = 'cuda,cpu'
+os.environ['JAX_PLATFORMS'] = 'cpu'
 
 from absl.testing import absltest
+from jaxfilter import ekf, rts_smoother
 import jax.numpy as jnp
 import jax
-from . import ekf
-from . import rts_smoother
 import matplotlib.pyplot as plt
 
 
@@ -35,7 +34,7 @@ class EKFTest(absltest.TestCase):
 
             X_truth = previous_X + jnp.array([[0.5, 0.]]).T * self.dt
             X_measured = X_truth[0,0] + jax.random.normal(subkey, shape=(1,1)) * 0.3 * self.dt
-            filter.update_linear(X_measured , H, R, U_initial, self.dt, stable=True)
+            filter = ekf.update_linear(filter, X_measured , H, R, U_initial, self.dt, stable=True)
             X_predict = filter.X
 
             return (key, X_truth, t, filter), (X_truth.reshape(2,), t, X_measured, X_predict.reshape(2,), filter.X_predicted.reshape(2,), filter.P, filter.P_predicted)
@@ -53,6 +52,7 @@ class EKFTest(absltest.TestCase):
         plt.plot(series_values[1][:-1], X_rts[:, 1], label = "flow-rts") 
         plt.legend()
         #plt.show()
+
         print(jnp.max(jnp.abs(series_values[0][:-1,0] - X_rts[:, 0])))
         print(jnp.max(jnp.abs(series_values[0][:,0] - series_values[3][:, 0])))
 
